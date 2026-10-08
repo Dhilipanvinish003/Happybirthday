@@ -79,14 +79,17 @@ export default function MemoryGallery({ data, onNext }) {
           >
             {/* Image Container with Full Frame Cover */}
             <div className="relative w-full h-80 sm:h-96 overflow-hidden bg-black flex items-center justify-center">
-              <img
-                src={photo.url}
-                alt={photo.caption}
-                loading={idx === 0 ? "eager" : "lazy"}
-                fetchPriority={idx === 0 ? "high" : "auto"}
-                decoding="async"
-                className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 brightness-95 group-hover:brightness-105 select-none"
-              />
+              <picture className="w-full h-full block">
+                <source srcSet={photo.url.replace(/\.(jpg|jpeg|png)$/, '.webp')} type="image/webp" />
+                <img
+                  src={photo.url}
+                  alt={photo.caption}
+                  loading={idx < 2 ? "eager" : "lazy"}
+                  fetchPriority={idx === 0 ? "high" : "auto"}
+                  decoding="async"
+                  className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 brightness-95 group-hover:brightness-105 select-none"
+                />
+              </picture>
 
               {/* Numbering Badge (01 / 06) */}
               <div className="absolute top-3.5 left-3.5 z-10">
@@ -239,11 +242,15 @@ export default function MemoryGallery({ data, onNext }) {
               className="relative max-w-4xl max-h-[85vh] flex flex-col items-center"
             >
               <div className="relative rounded-2xl overflow-hidden border border-purple-400/50 shadow-[0_0_50px_rgba(168,85,247,0.5)] bg-black">
-                <img
-                  src={photos[lightboxIndex].url}
-                  alt={photos[lightboxIndex].caption}
-                  className="max-h-[70vh] max-w-full object-contain rounded-2xl"
-                />
+                <picture className="block">
+                  <source srcSet={photos[lightboxIndex].url.replace(/\.(jpg|jpeg|png)$/, '.webp')} type="image/webp" />
+                  <img
+                    src={photos[lightboxIndex].url}
+                    alt={photos[lightboxIndex].caption}
+                    decoding="async"
+                    className="max-h-[70vh] max-w-full object-contain rounded-2xl"
+                  />
+                </picture>
               </div>
 
               <p className="mt-4 text-center font-cinzel text-base sm:text-xl text-purple-100 max-w-xl font-medium">

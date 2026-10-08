@@ -22,8 +22,8 @@ export default function ThingsILove({ data, onNext }) {
       exit={{ opacity: 0, y: -16, transition: { duration: 0.4, ease: "easeOut" } }}
       className="relative min-h-[92vh] min-h-[92dvh] w-full flex flex-col items-center justify-start px-4 sm:px-6 pt-16 sm:pt-24 pb-16 text-center"
     >
-      {/* Background ambient glow */}
-      <div className="absolute w-[600px] h-[600px] rounded-full bg-purple-600/10 blur-[140px] pointer-events-none -z-10" />
+      {/* Background ambient glow: Hardware-accelerated radial gradient without blur shader */}
+      <div className="absolute w-[360px] sm:w-[600px] h-[360px] sm:h-[600px] max-w-full rounded-full bg-[radial-gradient(circle_at_center,rgba(168,85,247,0.12)_0%,rgba(147,51,234,0.03)_50%,transparent_70%)] pointer-events-none -z-10" />
 
       {/* Header */}
       <div className="text-center mb-8 max-w-xl">
@@ -80,10 +80,10 @@ export default function ThingsILove({ data, onNext }) {
                 y: -6,
                 transition: { duration: 0.3 },
               }}
-              className="group relative p-6 sm:p-7 rounded-2xl glass-panel border border-purple-500/20 hover:border-purple-400/60 shadow-[0_10px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_0_30px_rgba(168,85,247,0.3)] transition-all duration-500 overflow-hidden flex flex-col justify-between text-left"
+              className="group relative p-6 sm:p-7 rounded-2xl glass-panel border border-purple-500/20 hover:border-purple-400/60 shadow-[0_10px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_0_30px_rgba(168,85,247,0.3)] overflow-hidden flex flex-col justify-between text-left"
             >
-              {/* Inner ambient glow on hover */}
-              <div className="absolute -top-10 -right-10 w-28 h-28 bg-purple-600/10 rounded-full blur-2xl group-hover:bg-purple-500/25 transition-all duration-500 pointer-events-none" />
+              {/* Inner ambient glow on hover: Pure hardware gradient */}
+              <div className="absolute -top-10 -right-10 w-28 h-28 bg-[radial-gradient(circle,rgba(168,85,247,0.15)_0%,transparent_70%)] rounded-full group-hover:bg-[radial-gradient(circle,rgba(168,85,247,0.28)_0%,transparent_70%)] transition-colors duration-300 pointer-events-none" />
 
               <div>
                 {/* Icon Container */}

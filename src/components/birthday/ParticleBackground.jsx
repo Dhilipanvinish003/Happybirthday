@@ -8,7 +8,7 @@ export default function ParticleBackground() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d', { alpha: false });
+    const ctx = canvas.getContext('2d', { alpha: true });
     if (!ctx) return;
 
     let animationFrameId;
@@ -22,8 +22,17 @@ export default function ParticleBackground() {
 
     const handleResize = () => {
       if (!canvas) return;
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
+      const newWidth = window.innerWidth;
+      const newHeight = window.innerHeight;
+
+      // Chrome mobile triggers window.resize when address bar expands/contracts during scrolling.
+      // Do NOT re-allocate canvas memory if it's only a mobile address bar shift!
+      if (Math.abs(newWidth - width) < 5 && Math.abs(newHeight - height) < 140) {
+        return;
+      }
+
+      width = canvas.width = newWidth;
+      height = canvas.height = newHeight;
     };
 
     window.addEventListener('resize', handleResize, { passive: true });
@@ -74,41 +83,40 @@ export default function ParticleBackground() {
 
       time += 0.014;
 
-      // Base solid dark background fill
-      ctx.fillStyle = '#050507';
-      ctx.fillRect(0, 0, width, height);
+      // Transparent clear - let underlying CSS background handle radial gradient
+      ctx.clearRect(0, 0, width, height);
 
-      // Draw subtle slow drifting ambient purple orbs
-      const orb1X = width * 0.25 + Math.sin(time * 0.4) * 45;
-      const orb1Y = height * 0.3 + Math.cos(time * 0.35) * 35;
-      const grad1 = ctx.createRadialGradient(orb1X, orb1Y, 10, orb1X, orb1Y, width * (isMobile ? 0.55 : 0.45));
-      grad1.addColorStop(0, 'rgba(124, 58, 237, 0.09)');
-      grad1.addColorStop(0.5, 'rgba(147, 51, 234, 0.03)');
-      grad1.addColorStop(1, 'rgba(5, 5, 7, 0)');
-      ctx.fillStyle = grad1;
-      ctx.fillRect(0, 0, width, height);
-
-      const orb2X = width * 0.75 + Math.cos(time * 0.5) * 55;
-      const orb2Y = height * 0.7 + Math.sin(time * 0.4) * 40;
-      const grad2 = ctx.createRadialGradient(orb2X, orb2Y, 10, orb2X, orb2Y, width * (isMobile ? 0.6 : 0.5));
-      grad2.addColorStop(0, 'rgba(192, 132, 252, 0.07)');
-      grad2.addColorStop(0.6, 'rgba(22, 11, 38, 0.02)');
-      grad2.addColorStop(1, 'rgba(5, 5, 7, 0)');
-      ctx.fillStyle = grad2;
-      ctx.fillRect(0, 0, width, height);
-
-      // Mouse interactive aura on desktop only
-      const mouse = mousePosRef.current;
-      if (!isMobile && mouse.x > 0 && mouse.y > 0) {
-        const mouseGrad = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, 240);
-        mouseGrad.addColorStop(0, 'rgba(168, 85, 247, 0.06)');
-        mouseGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-        ctx.fillStyle = mouseGrad;
+      // On desktop only: subtle drifting ambient purple orbs and mouse glow
+      if (!isMobile) {
+        const orb1X = width * 0.25 + Math.sin(time * 0.4) * 45;
+        const orb1Y = height * 0.3 + Math.cos(time * 0.35) * 35;
+        const grad1 = ctx.createRadialGradient(orb1X, orb1Y, 10, orb1X, orb1Y, width * 0.45);
+        grad1.addColorStop(0, 'rgba(124, 58, 237, 0.09)');
+        grad1.addColorStop(0.5, 'rgba(147, 51, 234, 0.03)');
+        grad1.addColorStop(1, 'rgba(5, 5, 7, 0)');
+        ctx.fillStyle = grad1;
         ctx.fillRect(0, 0, width, height);
+
+        const orb2X = width * 0.75 + Math.cos(time * 0.5) * 55;
+        const orb2Y = height * 0.7 + Math.sin(time * 0.4) * 40;
+        const grad2 = ctx.createRadialGradient(orb2X, orb2Y, 10, orb2X, orb2Y, width * 0.5);
+        grad2.addColorStop(0, 'rgba(192, 132, 252, 0.07)');
+        grad2.addColorStop(0.6, 'rgba(22, 11, 38, 0.02)');
+        grad2.addColorStop(1, 'rgba(5, 5, 7, 0)');
+        ctx.fillStyle = grad2;
+        ctx.fillRect(0, 0, width, height);
+
+        const mouse = mousePosRef.current;
+        if (mouse.x > 0 && mouse.y > 0) {
+          const mouseGrad = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, 240);
+          mouseGrad.addColorStop(0, 'rgba(168, 85, 247, 0.06)');
+          mouseGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = mouseGrad;
+          ctx.fillRect(0, 0, width, height);
+        }
       }
 
       // Draw floating particles
-      // On mobile, avoid expensive ctx.shadowBlur which murders GPU fill rates
       for (let i = 0; i < particleCount; i++) {
         const p = particles[i];
         p.x += p.vx;
@@ -173,11 +181,14 @@ export default function ParticleBackground() {
   }, []);
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+    <div
+      className="fixed inset-0 pointer-events-none z-0 overflow-hidden bg-[#050507]"
+      style={{ contain: 'strict' }}
+    >
       {/* Deep vignette background */}
       <div className="absolute inset-0 bg-[#050507]" />
 
-      {/* Radial soft purple lighting in the center */}
+      {/* Radial soft purple lighting in the center - hardware accelerated CSS */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(124,58,237,0.12)_0%,rgba(11,6,18,0.7)_60%,#050507_100%)] opacity-90" />
 
       {/* Film grain texture on desktop only (avoid mobile GPU rasterization overhead) */}
@@ -189,7 +200,10 @@ export default function ParticleBackground() {
       />
 
       {/* Optimized Canvas for floating ambient dust */}
-      <canvas ref={canvasRef} className="absolute inset-0 block w-full h-full" />
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 block w-full h-full pointer-events-none"
+      />
     </div>
   );
 }

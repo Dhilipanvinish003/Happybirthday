@@ -58,21 +58,48 @@
   font-family: 'Outfit', sans-serif;
 }
 
-/* Glassmorphism */
+/* Glassmorphism: Optimized for Chrome mobile without compositor tile crashes */
 .glass-panel {
-  background: rgba(11, 6, 18, 0.65);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(168, 85, 247, 0.2);
+  background: rgba(14, 8, 24, 0.94);
+  border: 1px solid rgba(168, 85, 247, 0.25);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4), inset 0 0 16px 0 rgba(192, 132, 252, 0.05);
 }
 
+@media (min-width: 768px) {
+  .glass-panel {
+    background: rgba(11, 6, 18, 0.65);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+  }
+}
+
 .glass-panel-glow {
-  background: rgba(22, 11, 38, 0.55);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(22, 11, 38, 0.94);
   border: 1px solid rgba(192, 132, 252, 0.35);
   box-shadow: 0 0 35px rgba(124, 58, 237, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+}
+
+@media (min-width: 768px) {
+  .glass-panel-glow {
+    background: rgba(22, 11, 38, 0.55);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+  }
+}
+
+/* On mobile devices, disable backdrop-filter to prevent Chrome GPU tile crashes */
+@media (max-width: 767px) {
+  .backdrop-blur-xl,
+  .backdrop-blur-2xl,
+  .backdrop-blur-lg,
+  .backdrop-blur-md {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
 }
 
 /* Neon Text Glow */

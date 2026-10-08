@@ -280,18 +280,22 @@ export default function BirthdayCake({ data, onComplete, setDuckedVolume }) {
         {/* Cake Container: Completely fixed, no shake, no bob */}
         <div className="relative flex items-center justify-center select-none pointer-events-none">
           <div className="relative flex flex-col items-center mt-12 sm:mt-16">
-            {/* High-quality crisp cake artwork */}
-            <img
-              src="/assets/cake_cutout.png"
-              alt="Luxury Birthday Cake"
-              loading="eager"
-              decoding="async"
-              className={`h-[38vh] sm:h-[46vh] max-h-[460px] w-auto object-contain transition-all duration-1000 select-none ${
-                candlesBlown
-                  ? 'brightness-40 opacity-70 filter blur-[1px]'
-                  : 'brightness-105 filter drop-shadow-[0_15px_35px_rgba(168,85,247,0.35)]'
-              }`}
-            />
+            {/* High-quality crisp cake artwork with instant WebP loading */}
+            <picture>
+              <source srcSet="/assets/cake_cutout.webp" type="image/webp" />
+              <img
+                src="/assets/cake_cutout.png"
+                alt="Luxury Birthday Cake"
+                loading="eager"
+                fetchPriority="high"
+                decoding="async"
+                className={`h-[38vh] sm:h-[46vh] max-h-[460px] w-auto object-contain transition-all duration-1000 select-none ${
+                  candlesBlown
+                    ? 'brightness-40 opacity-70 filter blur-[1px]'
+                    : 'brightness-105 filter drop-shadow-[0_15px_35px_rgba(168,85,247,0.35)]'
+                }`}
+              />
+            </picture>
 
             {/* Candle Flames & Wicks directly atop the flat top tier */}
             <div className="absolute inset-0 pointer-events-none">
