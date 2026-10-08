@@ -32,7 +32,7 @@ const MELODY = [
   { note: 349.23, dur: 2.0 }, // F4
 ];
 
-export function useBirthdayAudio(audioSrc = '/assets/birthday-music.mp3') {
+export function useBirthdayAudio(audioSrc = '/assets/WhatsApp Audio 2026-10-08 at 12.40.54 AM.mpeg') {
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   const [visualizerBars, setVisualizerBars] = useState([30, 60, 45, 80]);
@@ -157,29 +157,81 @@ export function useBirthdayAudio(audioSrc = '/assets/birthday-music.mp3') {
   const startAudio = useCallback(() => {
     setHasStarted(true);
 
-    // Try HTML5 Audio first
-    const audio = new Audio(audioSrc);
-    audio.loop = true;
-    audio.volume = 0.55;
-    audioElementRef.current = audio;
+    // If audio is already loaded and active, ensure playing
+    if (audioElementRef.current) {
+      if (!audioElementRef.current.paused) {
+        setIsPlaying(true);
+        return;
+      }
+      const resumePromise = audioElementRef.current.play();
+      if (resumePromise !== undefined) {
+        resumePromise
+          .then(() => setIsPlaying(true))
+          .catch(() => {
+            startSynthMelody();
+            setIsPlaying(true);
+          });
+        return;
+      }
+    }
 
-    const playPromise = audio.play();
+    const primarySrc = typeof audioSrc === 'string' ? encodeURI(decodeURI(audioSrc)) : audioSrc;
+    const fallbackSrc = '/assets/birthday-music.mp3';
 
-    if (playPromise !== undefined) {
-      playPromise
-        .then(() => {
+    const tryPlayAudio = (src, onFail) => {
+      try {
+        const audio = new Audio(src);
+        audio.loop = true;
+        audio.volume = 0.6;
+
+        // Guarantee continuous looping across all mobile/desktop browsers
+        audio.addEventListener('ended', () => {
+          audio.currentTime = 0;
+          audio.play().catch(() => {});
+        });
+
+        audioElementRef.current = audio;
+
+        let handled = false;
+        const triggerFail = () => {
+          if (handled) return;
+          handled = true;
+          if (onFail) onFail();
+        };
+
+        audio.onerror = triggerFail;
+
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              setIsPlaying(true);
+            })
+            .catch(() => {
+              triggerFail();
+            });
+        } else {
           setIsPlaying(true);
-        })
-        .catch(() => {
-          // If file not found or browser blocks audio file loading, fall back gracefully to our dreamy synthesizer!
+        }
+      } catch (err) {
+        if (onFail) onFail();
+      }
+    };
+
+    // Try primary source first
+    tryPlayAudio(primarySrc, () => {
+      console.warn("Primary audio source failed or unsupported format, trying fallback mp3...");
+      if (primarySrc !== fallbackSrc) {
+        tryPlayAudio(fallbackSrc, () => {
           console.info("Using dreamy ambient synthesizer for birthday melody.");
           startSynthMelody();
           setIsPlaying(true);
         });
-    } else {
-      startSynthMelody();
-      setIsPlaying(true);
-    }
+      } else {
+        startSynthMelody();
+        setIsPlaying(true);
+      }
+    });
   }, [audioSrc, startSynthMelody]);
 
   const togglePlay = useCallback(() => {
@@ -195,7 +247,7 @@ export function useBirthdayAudio(audioSrc = '/assets/birthday-music.mp3') {
       stopSynthMelody();
       setIsPlaying(false);
     } else {
-      if (audioElementRef.current && audioElementRef.current.src) {
+      if (audioElementRef.current) {
         audioElementRef.current.play().then(() => {
           setIsPlaying(true);
         }).catch(() => {
@@ -203,8 +255,7 @@ export function useBirthdayAudio(audioSrc = '/assets/birthday-music.mp3') {
           setIsPlaying(true);
         });
       } else {
-        startSynthMelody();
-        setIsPlaying(true);
+        startAudio();
       }
     }
   }, [hasStarted, isPlaying, startAudio, startSynthMelody, stopSynthMelody]);

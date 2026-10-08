@@ -257,6 +257,6 @@ export const birthdayData = {
   finalScreenGratitude: "Thank you for letting me be a small part of your story.",
   replayText: "REPLAY THE SURPRISE",
 
-  // Audio configuration (existing audio path kept)
-  music: "/assets/birthday-music.mp3"
+  // Audio configuration: song plays when client opens surprise button
+  music: "/assets/WhatsApp Audio 2026-10-08 at 12.40.54 AM.mpeg"
 };
