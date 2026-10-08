@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, ArrowRight, Heart, X, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
+import { ArrowRight, Heart, X, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
 
 export default function MemoryGallery({ data, onNext }) {
   const photos = data?.photos || [];
@@ -11,8 +11,8 @@ export default function MemoryGallery({ data, onNext }) {
       key="memory-stage"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0, scale: 0.96, filter: 'blur(10px)', transition: { duration: 1.2 } }}
-      className="relative min-h-[92vh] w-full flex flex-col items-center justify-center px-4 sm:px-6 pt-16 sm:pt-20 pb-20 select-none"
+      exit={{ opacity: 0, y: -16, transition: { duration: 0.4, ease: "easeOut" } }}
+      className="relative min-h-[92vh] min-h-[92dvh] w-full flex flex-col items-center justify-start px-4 sm:px-6 pt-16 sm:pt-20 pb-20 select-none"
     >
       {/* Background ambient lighting */}
       <div className="absolute w-[600px] h-[600px] rounded-full bg-purple-700/10 blur-[150px] pointer-events-none -z-10" />
@@ -82,7 +82,9 @@ export default function MemoryGallery({ data, onNext }) {
               <img
                 src={photo.url}
                 alt={photo.caption}
-                loading="lazy"
+                loading={idx === 0 ? "eager" : "lazy"}
+                fetchPriority={idx === 0 ? "high" : "auto"}
+                decoding="async"
                 className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 brightness-95 group-hover:brightness-105 select-none"
               />
 

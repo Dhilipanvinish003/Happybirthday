@@ -1,9 +1,28 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Volume2, VolumeX } from 'lucide-react';
 
+export default function MusicPlayer({ isPlaying, onToggle }) {
+  const [bars, setBars] = useState([30, 60, 45, 80]);
 
-export default function MusicPlayer({ isPlaying, onToggle, visualizerBars = [30, 60, 45, 80] }) {
+  // Only run the visualizer animation loop while audio is actually playing
+  useEffect(() => {
+    if (!isPlaying) return;
+
+    const interval = setInterval(() => {
+      setBars([
+        Math.floor(25 + Math.random() * 65),
+        Math.floor(40 + Math.random() * 55),
+        Math.floor(20 + Math.random() * 75),
+        Math.floor(35 + Math.random() * 60),
+      ]);
+    }, 180);
+
+    return () => clearInterval(interval);
+  }, [isPlaying]);
+
+  const displayBars = isPlaying ? bars : [20, 20, 20, 20];
+
   return (
     <div className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-50">
       <motion.button
@@ -32,16 +51,15 @@ export default function MusicPlayer({ isPlaying, onToggle, visualizerBars = [30,
           )}
         </div>
 
-        {/* Visualizer bars */}
+        {/* Visualizer bars: transform scaleY rather than reflow height */}
         <div className="flex items-end gap-0.5 h-4 w-5 justify-center overflow-hidden">
-          {visualizerBars.map((height, i) => (
-            <motion.span
+          {displayBars.map((height, i) => (
+            <span
               key={i}
-              className="w-1 bg-gradient-to-t from-purple-500 to-purple-300 rounded-full"
-              animate={{
-                height: isPlaying ? `${Math.max(15, height)}%` : '20%',
+              className="w-1 bg-gradient-to-t from-purple-500 to-purple-300 rounded-full transition-all duration-150"
+              style={{
+                height: `${isPlaying ? Math.max(15, height) : 20}%`,
               }}
-              transition={{ duration: 0.2 }}
             />
           ))}
         </div>

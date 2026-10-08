@@ -41,8 +41,8 @@ export default function BalloonScene({ data, onComplete }) {
       key="balloon-stage"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0, filter: 'blur(12px)', transition: { duration: 1.5 } }}
-      className="relative min-h-[90vh] w-full flex flex-col items-center justify-center overflow-hidden"
+      exit={{ opacity: 0, y: -16, transition: { duration: 0.5, ease: "easeOut" } }}
+      className="relative min-h-[90vh] min-h-[90dvh] w-full flex flex-col items-center justify-center overflow-hidden"
     >
       {/* Floating balloons container */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">

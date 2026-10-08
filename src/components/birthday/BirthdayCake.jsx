@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import CandleInteraction from './CandleInteraction';
 
 // Premium Black & Purple floating balloons inside the cake room (Background, Middle, Foreground)
@@ -36,27 +36,18 @@ const SCENE_BALLOONS = [
 
 // Continuously looping celebratory flying texts with the 3 special names
 const FLYING_TEXTS = [
-  // 1. Happy Birthday Anisha
   { id: 'fly-txt-1', text: 'Happy Birthday Anisha ✨', left: '7%', duration: 16, delay: -1, driftX: 18, rot: -3 },
-  // 2. Happy Birthday Shuttumani
   { id: 'fly-txt-2', text: 'Happy Birthday Shuttumani ❤️', left: '73%', duration: 18, delay: -4, driftX: -20, rot: 3 },
-  // 3. Happy Birthday Chundhariyee
   { id: 'fly-txt-3', text: 'Happy Birthday Chundhariyee 💖', left: '16%', duration: 20, delay: -7, driftX: 15, rot: 2 },
-  // 4. Happy Birthday Anisha
   { id: 'fly-txt-4', text: 'Happy Birthday Anisha 💜', left: '81%', duration: 17, delay: -10, driftX: -16, rot: -2 },
-  // 5. Happy Birthday Shuttumani
   { id: 'fly-txt-5', text: 'Happy Birthday Shuttumani ✨', left: '24%', duration: 19, delay: -13, driftX: 16, rot: 3 },
-  // 6. Happy Birthday Chundhariyee
   { id: 'fly-txt-6', text: 'Happy Birthday Chundhariyee ✨', left: '65%', duration: 21, delay: -16, driftX: -18, rot: -3 },
-  // 7. Happy Birthday Anisha
   { id: 'fly-txt-7', text: 'Happy Birthday Anisha 👑', left: '10%', duration: 18, delay: -8, driftX: -15, rot: -2 },
-  // 8. Happy Birthday Shuttumani
   { id: 'fly-txt-8', text: 'Happy Birthday Shuttumani 🌸', left: '77%', duration: 17, delay: -14, driftX: 18, rot: 4 },
-  // 9. Happy Birthday Chundhariyee
   { id: 'fly-txt-9', text: 'Happy Birthday Chundhariyee 💜', left: '20%', duration: 22, delay: -3, driftX: -14, rot: 2 },
 ];
 
-// 5 candles arranged gracefully directly on top of the dark chocolate mirror glaze tier
+// 5 candles arranged gracefully directly on top of the cake tier
 const CANDLE_CONFIGS = [
   { id: 1, left: '39%', top: '2.5%', height: 28, delay: 0 },
   { id: 2, left: '44.5%', top: '1.2%', height: 34, delay: 0.15 },
@@ -65,16 +56,44 @@ const CANDLE_CONFIGS = [
   { id: 5, left: '61%', top: '2.5%', height: 28, delay: 0.1 },
 ];
 
-export default function BirthdayCake({ data, onComplete }) {
+export default function BirthdayCake({ data, onComplete, setDuckedVolume }) {
   const [candlesBlown, setCandlesBlown] = useState(false);
   const [isBlowingSequence, setIsBlowingSequence] = useState(false);
-  const [showWishBanner, setShowWishBanner] = useState(false);
+
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+
+  // On mobile devices, use an optimized subset of balloons and texts to guarantee 60 FPS
+  const visibleBalloons = useMemo(() => {
+    if (!isMobile) return SCENE_BALLOONS;
+    return SCENE_BALLOONS.filter((_, idx) => idx % 2 === 0);
+  }, [isMobile]);
+
+  const visibleTexts = useMemo(() => {
+    if (!isMobile) return FLYING_TEXTS;
+    return FLYING_TEXTS.filter((_, idx) => idx % 2 === 0);
+  }, [isMobile]);
+
+  // Gently duck music volume while listening to microphone, restore afterward
+  useEffect(() => {
+    if (setDuckedVolume && !candlesBlown) {
+      setDuckedVolume(true);
+    }
+    return () => {
+      if (setDuckedVolume) {
+        setDuckedVolume(false);
+      }
+    };
+  }, [candlesBlown, setDuckedVolume]);
 
   const handleBlowSuccess = () => {
     setCandlesBlown(true);
     setIsBlowingSequence(false);
 
-    // Keep cake visible, then slowly dim into darkness and transition smoothly to WishToStars
+    if (setDuckedVolume) {
+      setDuckedVolume(false);
+    }
+
+    // Keep cake visible, then transition smoothly to WishToStars
     const timer = setTimeout(() => {
       onComplete();
     }, 3800);
@@ -87,33 +106,33 @@ export default function BirthdayCake({ data, onComplete }) {
       key="cake-stage"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0, y: -25, filter: 'blur(12px)', transition: { duration: 1.4 } }}
-      className={`relative min-h-screen w-full flex flex-col items-center justify-between px-4 pt-16 sm:pt-20 pb-8 select-none overflow-hidden transition-colors duration-1000 ${candlesBlown ? 'bg-black/50' : 'bg-transparent'
-        }`}
+      exit={{ opacity: 0, y: -20, transition: { duration: 0.6 } }}
+      className={`relative min-h-screen min-h-[100dvh] w-full flex flex-col items-center justify-between px-4 pt-16 sm:pt-20 pb-8 select-none overflow-hidden transition-colors duration-1000 ${
+        candlesBlown ? 'bg-black/50' : 'bg-transparent'
+      }`}
     >
       {/* ========================================================= */}
       {/* 1. UNIFIED FULLSCREEN ATMOSPHERIC ENVIRONMENT */}
       {/* ========================================================= */}
-
-      {/* Atmospheric purple fog & radial ambient center */}
       <div
-        className={`absolute inset-0 pointer-events-none transition-all duration-1000 -z-30 ${candlesBlown ? 'opacity-40' : 'opacity-80'
-          }`}
+        className={`absolute inset-0 pointer-events-none transition-all duration-1000 -z-30 ${
+          candlesBlown ? 'opacity-40' : 'opacity-80'
+        }`}
       >
-        {/* Soft violet spotlight from ceiling onto the cake */}
+        {/* Soft violet spotlight onto the cake */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[550px] bg-[radial-gradient(ellipse_at_top,rgba(168,85,247,0.18)_0%,rgba(124,58,237,0.06)_50%,transparent_80%)] blur-2xl" />
         {/* Floor ambient glow underneath the cake */}
         <div className="absolute bottom-16 left-1/2 -translate-x-1/2 w-[650px] h-[260px] bg-[radial-gradient(ellipse_at_center,rgba(192,132,252,0.16)_0%,rgba(124,58,237,0.08)_45%,transparent_75%)] blur-3xl" />
       </div>
 
-      {/* Very subtle diagonal volumetric light rays */}
+      {/* Subtle diagonal volumetric light rays */}
       <div className="absolute inset-0 pointer-events-none -z-25 opacity-20 bg-[radial-gradient(circle_at_20%_15%,rgba(192,132,252,0.15)_0%,transparent_50%),radial-gradient(circle_at_80%_20%,rgba(147,51,234,0.12)_0%,transparent_50%)]" />
 
       {/* ========================================================= */}
       {/* 2. BALLOONS FLOATING INSIDE THE ROOM (Background Layer) */}
       {/* ========================================================= */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-        {SCENE_BALLOONS.filter((b) => b.depth === 'bg').map((b) => (
+        {visibleBalloons.filter((b) => b.depth === 'bg').map((b) => (
           <div
             key={b.id}
             style={{
@@ -138,10 +157,10 @@ export default function BirthdayCake({ data, onComplete }) {
       </div>
 
       {/* ========================================================= */}
-      {/* 2.5. CONTINUOUS LOOPING FLYING NAMES (Anisha, Shuttumani, Chundhariyee) */}
+      {/* 2.5. CONTINUOUS LOOPING FLYING NAMES */}
       {/* ========================================================= */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-15">
-        {FLYING_TEXTS.map((item) => (
+        {visibleTexts.map((item) => (
           <div
             key={item.id}
             style={{
@@ -161,20 +180,19 @@ export default function BirthdayCake({ data, onComplete }) {
               </span>
               <Sparkles className="w-3 h-3 text-purple-300 animate-pulse shrink-0" />
             </div>
-            {/* Luminous trailing string */}
             <div className="w-[1px] h-8 bg-gradient-to-b from-purple-400/50 to-transparent shadow-[0_0_6px_rgba(192,132,252,0.5)]" />
           </div>
         ))}
       </div>
 
       {/* ========================================================= */}
-      {/* 3. SCENE HEADER TEXT (Naturally integrated, no card box) */}
+      {/* 3. SCENE HEADER TEXT */}
       {/* ========================================================= */}
       <div className="text-center z-20 max-w-2xl mx-auto flex flex-col items-center">
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1 }}
+          transition={{ duration: 0.8 }}
           className="flex items-center justify-center gap-2 mb-1"
         >
           <Sparkles className="w-3.5 h-3.5 text-purple-300" />
@@ -184,11 +202,11 @@ export default function BirthdayCake({ data, onComplete }) {
           <Sparkles className="w-3.5 h-3.5 text-purple-300" />
         </motion.div>
 
-        {/* Person's Name - Elegant cinematic serif with soft glow */}
+        {/* Person's Name */}
         <motion.h1
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.1, delay: 0.3 }}
+          transition={{ duration: 0.9, delay: 0.2 }}
           className="font-cormorant text-4xl sm:text-6xl md:text-7xl font-semibold italic tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-purple-100 via-white to-purple-200 drop-shadow-[0_0_25px_rgba(192,132,252,0.7)]"
         >
           {data.name || "Anisha"}
@@ -198,7 +216,7 @@ export default function BirthdayCake({ data, onComplete }) {
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 0.6 }}
+          transition={{ duration: 0.8, delay: 0.4 }}
           className="text-xs sm:text-sm text-purple-200/90 font-light tracking-[0.2em] uppercase mt-1 max-w-lg leading-relaxed"
         >
           {data.cakeSubtitle || "Today, the whole world gets to celebrate the beautiful person you are."}
@@ -208,7 +226,7 @@ export default function BirthdayCake({ data, onComplete }) {
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 0.9 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
           className="font-cormorant italic text-base sm:text-lg text-pink-200/90 tracking-wide mt-1"
         >
           "{data.cakeWishPrompt || "Make a wish, beautiful..."}"
@@ -219,7 +237,7 @@ export default function BirthdayCake({ data, onComplete }) {
       {/* 4. BALLOONS (Middle & Foreground Layer) */}
       {/* ========================================================= */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
-        {SCENE_BALLOONS.filter((b) => b.depth !== 'bg').map((b) => (
+        {visibleBalloons.filter((b) => b.depth !== 'bg').map((b) => (
           <div
             key={b.id}
             style={{
@@ -245,36 +263,34 @@ export default function BirthdayCake({ data, onComplete }) {
       </div>
 
       {/* ========================================================= */}
-      {/* 5. SEAMLESS CAKE CENTERPIECE (Belongs to the Environment) */}
+      {/* 5. SEAMLESS CAKE CENTERPIECE (Stationary & Crisp) */}
       {/* ========================================================= */}
       <div className="relative z-15 flex flex-col items-center justify-center my-auto w-full max-w-full">
-        {/* Ambient Bloom behind the cake - steady soft aura */}
+        {/* Ambient Bloom behind the cake */}
         <div
-          className={`absolute w-72 sm:w-96 h-72 sm:h-96 rounded-full blur-[100px] pointer-events-none transition-all duration-1000 -z-10 ${candlesBlown
-              ? 'bg-purple-900/10 scale-90'
-              : 'bg-purple-600/20 scale-100'
-            }`}
+          className={`absolute w-72 sm:w-96 h-72 sm:h-96 rounded-full blur-[100px] pointer-events-none transition-all duration-1000 -z-10 ${
+            candlesBlown ? 'bg-purple-900/10 scale-90' : 'bg-purple-600/20 scale-100'
+          }`}
         />
 
-        {/* Ambient Floor Reflection & Shadow beneath the glossy pedestal */}
+        {/* Ambient Floor Reflection & Shadow beneath cake pedestal */}
         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-72 sm:w-96 h-12 bg-purple-500/25 blur-2xl rounded-[50%] pointer-events-none -z-10" />
         <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-80 sm:w-[420px] h-6 bg-black/90 blur-md rounded-[50%] pointer-events-none -z-10" />
 
-        {/* Main Fixed Cake Container: FIXED IN PLACE, NO SHAKE, NO WOBBLE */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.96 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-          className="relative flex items-center justify-center select-none"
-        >
-          {/* Fixed Cake Container (Completely still, not shaking or bobbing) */}
-          <div className="relative flex flex-col items-center mt-20">
-            {/* The Cake Cutout Artwork */}
+        {/* Cake Container: Completely fixed, no shake, no bob */}
+        <div className="relative flex items-center justify-center select-none pointer-events-none">
+          <div className="relative flex flex-col items-center mt-12 sm:mt-16">
+            {/* High-quality crisp cake artwork */}
             <img
               src="/assets/cake_cutout.png"
               alt="Luxury Birthday Cake"
-              className={`h-[42vh] sm:h-[48vh] max-h-[460px] w-auto object-contain transition-all duration-1000 pointer-events-none select-none ${candlesBlown ? 'brightness-40 opacity-70 filter blur-[1px]' : 'brightness-105 filter drop-shadow-[0_15px_35px_rgba(168,85,247,0.35)]'
-                }`}
+              loading="eager"
+              decoding="async"
+              className={`h-[38vh] sm:h-[46vh] max-h-[460px] w-auto object-contain transition-all duration-1000 select-none ${
+                candlesBlown
+                  ? 'brightness-40 opacity-70 filter blur-[1px]'
+                  : 'brightness-105 filter drop-shadow-[0_15px_35px_rgba(168,85,247,0.35)]'
+              }`}
             />
 
             {/* Candle Flames & Wicks directly atop the flat top tier */}
@@ -293,22 +309,17 @@ export default function BirthdayCake({ data, onComplete }) {
                   <div className="relative w-6 h-8 flex items-center justify-center">
                     {!candlesBlown ? (
                       <motion.div
-                        initial={{ opacity: 0, scale: 0 }}
                         animate={
                           isBlowingSequence
-                            ? { scale: [1, 1.4, 0.3, 0.7, 0], opacity: [1, 0.8, 0.4, 0.2, 0] }
-                            : { opacity: 1, scale: [1, 1.08, 0.96, 1], rotate: [0, 2, -2, 0] }
+                            ? { scale: [1, 1.3, 0.4, 0.8, 0], opacity: [1, 0.9, 0.4, 0.2, 0] }
+                            : { opacity: 1 }
                         }
                         transition={
                           isBlowingSequence
-                            ? { duration: 1.1 }
-                            : {
-                              opacity: { delay: 0.6 + idx * 0.1, duration: 0.4 },
-                              scale: { repeat: Infinity, duration: 0.6 + candle.delay, ease: "easeInOut" },
-                              rotate: { repeat: Infinity, duration: 0.6 + candle.delay, ease: "easeInOut" }
-                            }
+                            ? { duration: 1.0, ease: "easeOut" }
+                            : { opacity: { delay: 0.2 + idx * 0.1, duration: 0.3 } }
                         }
-                        className="flame-active relative flex flex-col items-center cursor-pointer"
+                        className="flame-active relative flex flex-col items-center"
                       >
                         {/* Atmospheric candle aura glow */}
                         <div className="absolute -inset-3 rounded-full bg-purple-500/40 blur-md pointer-events-none" />
@@ -345,7 +356,7 @@ export default function BirthdayCake({ data, onComplete }) {
             {/* Soft floor reflection directly under the cake base */}
             <div className="w-48 sm:w-64 h-4 rounded-full bg-gradient-to-r from-transparent via-purple-400/30 to-transparent blur-sm mt-[-6px] pointer-events-none" />
           </div>
-        </motion.div>
+        </div>
       </div>
 
       {/* ========================================================= */}
@@ -365,7 +376,7 @@ export default function BirthdayCake({ data, onComplete }) {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 1.0, duration: 1.3, ease: 'easeInOut' }}
+              transition={{ delay: 0.9, duration: 1.2, ease: 'easeInOut' }}
               className="fixed inset-0 z-50 bg-[#020106] pointer-events-none flex flex-col items-center justify-center"
             >
               {/* Emerging purple cosmic dust */}
@@ -373,7 +384,7 @@ export default function BirthdayCake({ data, onComplete }) {
               <motion.div
                 initial={{ opacity: 0, scale: 0.9, y: 15 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ delay: 0.6, duration: 1.1 }}
+                transition={{ delay: 0.5, duration: 1.0 }}
                 className="flex flex-col items-center gap-3 text-center px-6 max-w-lg"
               >
                 <div className="flex items-center gap-2 text-purple-300">

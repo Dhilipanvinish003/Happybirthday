@@ -22,8 +22,8 @@ export default function FutureMessage({ data, onNext }) {
       key="future-message-stage"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0, y: -20, filter: 'blur(10px)', transition: { duration: 1.2 } }}
-      className="relative min-h-[92vh] w-full flex flex-col items-center justify-center px-4 sm:px-6 pt-20 sm:pt-24 pb-16 text-center select-none"
+      exit={{ opacity: 0, y: -16, transition: { duration: 0.4, ease: "easeOut" } }}
+      className="relative min-h-[92vh] min-h-[92dvh] w-full flex flex-col items-center justify-start px-4 sm:px-6 pt-16 sm:pt-24 pb-16 text-center select-none"
     >
       {/* Background ambient lighting */}
       <div className="absolute w-[500px] h-[500px] rounded-full bg-purple-600/10 blur-[130px] pointer-events-none -z-10" />

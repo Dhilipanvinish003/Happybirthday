@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, memo } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { birthdayData } from './data/birthdayData';
 
@@ -19,28 +19,70 @@ import FutureSection from './components/birthday/FutureSection';
 import FutureMessage from './components/birthday/FutureMessage';
 import FinalMessage from './components/birthday/FinalMessage';
 
+// Hardware-accelerated desktop cursor glow without React re-render overhead
+const DesktopCursorLighting = memo(function DesktopCursorLighting() {
+  const glowRef = useRef(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || window.innerWidth < 768) return;
+    const el = glowRef.current;
+    if (!el) return;
+
+    let rafId;
+    let targetX = -1000;
+    let targetY = -1000;
+    let currentX = -1000;
+    let currentY = -1000;
+
+    const onMove = (e) => {
+      targetX = e.clientX - 192;
+      targetY = e.clientY - 192;
+    };
+
+    const updatePosition = () => {
+      currentX += (targetX - currentX) * 0.15;
+      currentY += (targetY - currentY) * 0.15;
+      el.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+      rafId = requestAnimationFrame(updatePosition);
+    };
+
+    window.addEventListener('mousemove', onMove, { passive: true });
+    rafId = requestAnimationFrame(updatePosition);
+
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      cancelAnimationFrame(rafId);
+    };
+  }, []);
+
+  return (
+    <div
+      ref={glowRef}
+      className="fixed top-0 left-0 w-96 h-96 rounded-full bg-purple-600/5 blur-[80px] pointer-events-none -z-10 hidden md:block will-change-transform"
+      style={{ transform: 'translate3d(-1000px, -1000px, 0)' }}
+    />
+  );
+});
+
 export default function App() {
   const [currentStage, setCurrentStage] = useState(1);
   const [maxUnlockedStage, setMaxUnlockedStage] = useState(1);
-  const [cursorPos, setCursorPos] = useState({ x: -100, y: -100 });
 
   const {
     isPlaying,
     startAudio,
     togglePlay,
-    visualizerBars,
+    setDuckedVolume,
   } = useBirthdayAudio(birthdayData.music);
 
-  // Desktop custom cursor lighting
+  // Guarantee that every stage transition immediately scrolls to top
+  // Completely prevents mobile black/empty screen gaps when previous stage was scrolled
   useEffect(() => {
-    const handleMouseMove = (e) => {
-      setCursorPos({ x: e.clientX, y: e.clientY });
-    };
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [currentStage]);
 
   const advanceStage = (nextStage) => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     setCurrentStage(nextStage);
     if (nextStage > maxUnlockedStage) {
       setMaxUnlockedStage(nextStage);
@@ -53,34 +95,27 @@ export default function App() {
   };
 
   const handleReplay = () => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     setCurrentStage(1);
     setMaxUnlockedStage(1);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
-    <main className="relative min-h-screen w-full bg-[#050507] text-white flex flex-col items-center justify-center overflow-x-hidden">
+    <main className="relative min-h-screen min-h-[100dvh] w-full bg-[#050507] text-white flex flex-col items-center justify-start overflow-x-hidden">
       {/* Cinematic Particle & Ambient Canvas Background */}
       <ParticleBackground />
 
-      {/* Interactive Cursor Glow on Desktop */}
-      <div
-        className="fixed w-96 h-96 rounded-full bg-purple-600/5 blur-[80px] pointer-events-none -z-10 transition-transform duration-75 ease-out hidden md:block"
-        style={{
-          left: `${cursorPos.x - 192}px`,
-          top: `${cursorPos.y - 192}px`,
-        }}
-      />
+      {/* Zero re-render Desktop Cursor Lighting */}
+      <DesktopCursorLighting />
 
       {/* Floating Ambient Music Controller */}
       <MusicPlayer
         isPlaying={isPlaying}
         onToggle={togglePlay}
-        visualizerBars={visualizerBars}
       />
 
       {/* Multi-Stage Cinematic Journey */}
-      <div className="w-full relative z-10 flex flex-col items-center justify-center">
+      <div className="w-full relative z-10 flex flex-col items-center justify-start flex-grow">
         <AnimatePresence mode="wait">
           {/* Section 1: Opening */}
           {currentStage === 1 && (
@@ -106,6 +141,7 @@ export default function App() {
               key="cake"
               data={birthdayData}
               onComplete={() => advanceStage(4)}
+              setDuckedVolume={setDuckedVolume}
             />
           )}
 

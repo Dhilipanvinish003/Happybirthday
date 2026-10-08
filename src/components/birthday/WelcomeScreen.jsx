@@ -8,9 +8,9 @@ export default function WelcomeScreen({ data, onOpenSurprise }) {
       key="welcome-stage"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0, scale: 0.96, filter: 'blur(10px)' }}
-      transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-      className="relative min-h-[90vh] flex flex-col items-center justify-center px-4 sm:px-6 text-center select-none"
+      exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.4 } }}
+      transition={{ duration: 1.0, ease: [0.22, 1, 0.36, 1] }}
+      className="relative min-h-[90vh] min-h-[90dvh] flex flex-col items-center justify-center px-4 sm:px-6 text-center select-none"
     >
       {/* Ambient background glow circle */}
       <div className="absolute w-72 h-72 sm:w-96 sm:h-96 rounded-full bg-purple-600/10 blur-[100px] pointer-events-none -z-10" />

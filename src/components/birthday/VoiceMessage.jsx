@@ -21,8 +21,8 @@ export default function VoiceMessage({ data, onNext, isPlaying, onTogglePlay, st
       key="voice-stage"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0, y: -20, filter: 'blur(10px)', transition: { duration: 1.2 } }}
-      className="relative min-h-[92vh] w-full flex flex-col items-center justify-center px-4 sm:px-6 pt-20 sm:pt-24 pb-16 text-center select-none"
+      exit={{ opacity: 0, y: -16, transition: { duration: 0.4, ease: "easeOut" } }}
+      className="relative min-h-[92vh] min-h-[92dvh] w-full flex flex-col items-center justify-start px-4 sm:px-6 pt-16 sm:pt-24 pb-16 text-center select-none"
     >
       {/* Background ambient lighting */}
       <div className="absolute w-[500px] h-[500px] rounded-full bg-purple-600/10 blur-[130px] pointer-events-none -z-10" />
@@ -70,14 +70,16 @@ export default function VoiceMessage({ data, onNext, isPlaying, onTogglePlay, st
         transition={{ delay: 0.4, duration: 0.9 }}
         className="relative w-full max-w-lg p-8 sm:p-10 rounded-3xl glass-panel-glow border border-purple-400/40 shadow-[0_15px_40px_rgba(0,0,0,0.6)] flex flex-col items-center gap-6"
       >
-        {/* Animated wave bars */}
+        {/* Animated wave bars - GPU scaleY transforms without layout reflow */}
         <div className="flex items-center gap-1.5 h-16 justify-center">
           {[20, 45, 75, 95, 60, 40, 85, 100, 70, 35, 80, 50, 25].map((baseHeight, i) => (
             <motion.span
               key={i}
-              className="w-1.5 rounded-full bg-gradient-to-t from-purple-600 via-purple-300 to-pink-200 shadow-[0_0_10px_rgba(192,132,252,0.8)]"
+              className="w-1.5 h-full rounded-full bg-gradient-to-t from-purple-600 via-purple-300 to-pink-200 shadow-[0_0_8px_rgba(192,132,252,0.6)] origin-center"
               animate={{
-                height: isPlaying ? [`${Math.max(15, baseHeight * 0.4)}%`, `${baseHeight}%`, `${Math.max(15, baseHeight * 0.3)}%`] : '20%',
+                scaleY: isPlaying
+                  ? [Math.max(0.15, (baseHeight * 0.4) / 100), baseHeight / 100, Math.max(0.15, (baseHeight * 0.3) / 100)]
+                  : 0.2,
               }}
               transition={{
                 repeat: Infinity,

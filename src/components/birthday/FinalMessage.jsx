@@ -76,10 +76,10 @@ export default function FinalMessage({ data = {}, onReplay }) {
       key="final-stage"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
+      exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.4 } }}
+      transition={{ duration: 1.0, ease: [0.22, 1, 0.36, 1] }}
       onClick={stage === 'confession' ? handleNextConfession : undefined}
-      className="relative min-h-[92vh] w-full flex flex-col items-center justify-center px-4 sm:px-6 pt-16 pb-12 text-center select-none cursor-pointer sm:cursor-default"
+      className="relative min-h-[92vh] min-h-[92dvh] w-full flex flex-col items-center justify-center px-4 sm:px-6 pt-16 pb-12 text-center select-none cursor-pointer sm:cursor-default"
       title={stage === 'confession' ? "Tap anywhere to continue reading" : ""}
     >
       {/* Deep dark backdrop with focused neon center */}

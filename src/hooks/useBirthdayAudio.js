@@ -35,24 +35,22 @@ const MELODY = [
 export function useBirthdayAudio(audioSrc = '/assets/WhatsApp Audio 2026-10-08 at 12.40.54 AM.mpeg') {
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
-  const [visualizerBars, setVisualizerBars] = useState([30, 60, 45, 80]);
 
   const audioElementRef = useRef(null);
   const synthCtxRef = useRef(null);
   const synthTimerRef = useRef(null);
   const isUsingSynthRef = useRef(false);
 
-
   // Play ambient synthesized chime note
   const playSynthNote = useCallback((freq, duration, ctx) => {
     if (!ctx || ctx.state === 'closed') return;
     try {
       const now = ctx.currentTime;
-      
+
       // Main chime tone
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-      
+
       // Subtle harmonic overtone for glass/celesta chime feel
       const osc2 = ctx.createOscillator();
       const gain2 = ctx.createGain();
@@ -137,22 +135,6 @@ export function useBirthdayAudio(audioSrc = '/assets/WhatsApp Audio 2026-10-08 a
     }
   }, []);
 
-  // Start visualizer animation
-  useEffect(() => {
-    if (!isPlaying) return;
-
-    const interval = setInterval(() => {
-      setVisualizerBars([
-        Math.floor(25 + Math.random() * 65),
-        Math.floor(40 + Math.random() * 55),
-        Math.floor(20 + Math.random() * 75),
-        Math.floor(35 + Math.random() * 60),
-      ]);
-    }, 150);
-
-    return () => clearInterval(interval);
-  }, [isPlaying]);
-
   // Audio start trigger on user interaction
   const startAudio = useCallback(() => {
     setHasStarted(true);
@@ -184,7 +166,6 @@ export function useBirthdayAudio(audioSrc = '/assets/WhatsApp Audio 2026-10-08 a
         audio.loop = true;
         audio.volume = 0.6;
 
-        // Guarantee continuous looping across all mobile/desktop browsers
         audio.addEventListener('ended', () => {
           audio.currentTime = 0;
           audio.play().catch(() => {});
@@ -213,7 +194,7 @@ export function useBirthdayAudio(audioSrc = '/assets/WhatsApp Audio 2026-10-08 a
         } else {
           setIsPlaying(true);
         }
-      } catch (err) {
+      } catch {
         if (onFail) onFail();
       }
     };
@@ -260,6 +241,13 @@ export function useBirthdayAudio(audioSrc = '/assets/WhatsApp Audio 2026-10-08 a
     }
   }, [hasStarted, isPlaying, startAudio, startSynthMelody, stopSynthMelody]);
 
+  // Method to temporarily lower volume (e.g. during candle mic blowing)
+  const setDuckedVolume = useCallback((duck) => {
+    if (audioElementRef.current) {
+      audioElementRef.current.volume = duck ? 0.2 : 0.6;
+    }
+  }, []);
+
   useEffect(() => {
     return () => {
       if (audioElementRef.current) {
@@ -275,6 +263,6 @@ export function useBirthdayAudio(audioSrc = '/assets/WhatsApp Audio 2026-10-08 a
     hasStarted,
     startAudio,
     togglePlay,
-    visualizerBars,
+    setDuckedVolume,
   };
 }

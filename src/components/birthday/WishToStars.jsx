@@ -80,9 +80,10 @@ export default function WishToStars({ name = "Anisha", onComplete }) {
     };
 
     const initStars = (width, height) => {
+      const isMobile = width < 768;
       // Hundreds of deep space stars with varied depths, speeds, and subtle purple/white tints
       const stars = [];
-      const starCount = Math.min(Math.floor((width * height) / 3200), 280);
+      const starCount = isMobile ? 75 : Math.min(Math.floor((width * height) / 3200), 260);
       for (let i = 0; i < starCount; i++) {
         stars.push({
           x: Math.random() * width,
@@ -100,13 +101,14 @@ export default function WishToStars({ name = "Anisha", onComplete }) {
         });
       }
 
-      // Soft purple cosmic dust particles
+      // Soft purple cosmic dust particles (lightweight on mobile)
       const dust = [];
-      for (let i = 0; i < 45; i++) {
+      const dustCount = isMobile ? 12 : 36;
+      for (let i = 0; i < dustCount; i++) {
         dust.push({
           x: Math.random() * width,
           y: Math.random() * height,
-          radius: Math.random() * 45 + 20,
+          radius: isMobile ? Math.random() * 35 + 15 : Math.random() * 45 + 20,
           alpha: Math.random() * 0.08 + 0.02,
           vx: (Math.random() - 0.5) * 0.2,
           vy: (Math.random() - 0.5) * 0.2,
@@ -117,17 +119,22 @@ export default function WishToStars({ name = "Anisha", onComplete }) {
       simRef.current.dust = dust;
     };
 
-    window.addEventListener('resize', handleResize);
+    window.addEventListener('resize', handleResize, { passive: true });
     handleResize();
+
+    let isRunning = true;
 
     // Main render loop
     let lastTime = performance.now();
     const render = (time) => {
+      if (!isRunning) return;
+
       const dt = Math.min((time - lastTime) / 1000, 0.1);
       lastTime = time;
 
       const width = window.innerWidth;
       const height = window.innerHeight;
+      const isMobile = width < 768;
       const orb = orbPosRef.current;
       const sim = simRef.current;
 
@@ -146,7 +153,8 @@ export default function WishToStars({ name = "Anisha", onComplete }) {
       ctx.fillRect(0, 0, width, height);
 
       // Cosmic dust & violet nebula clouds
-      sim.dust.forEach((d) => {
+      for (let i = 0; i < sim.dust.length; i++) {
+        const d = sim.dust[i];
         d.x += d.vx;
         d.y += d.vy;
         if (d.x < -d.radius) d.x = width + d.radius;
@@ -161,10 +169,11 @@ export default function WishToStars({ name = "Anisha", onComplete }) {
         ctx.beginPath();
         ctx.arc(d.x, d.y, d.radius, 0, Math.PI * 2);
         ctx.fill();
-      });
+      }
 
       // Stars render & gravitational physics toward central orb
-      sim.stars.forEach((s) => {
+      for (let i = 0; i < sim.stars.length; i++) {
+        const s = sim.stars[i];
         s.twinklePhase += s.twinkleSpeed;
         s.alpha = s.baseAlpha + Math.sin(s.twinklePhase) * 0.3;
 
@@ -201,7 +210,7 @@ export default function WishToStars({ name = "Anisha", onComplete }) {
         ctx.beginPath();
         ctx.arc(s.x, s.y, s.radius * (1 + sim.pullFactor * 0.5), 0, Math.PI * 2);
         ctx.fill();
-      });
+      }
       ctx.globalAlpha = 1;
 
       // -------------------------------------------------------------
@@ -221,16 +230,20 @@ export default function WishToStars({ name = "Anisha", onComplete }) {
             continue;
           }
 
-          ctx.save();
           ctx.fillStyle = p.color;
           ctx.globalAlpha = Math.max(0, p.alpha);
-          ctx.shadowBlur = 10;
-          ctx.shadowColor = '#C084FC';
+          if (!isMobile) {
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = '#C084FC';
+          }
           ctx.beginPath();
           ctx.arc(p.x, p.y, Math.max(0.5, p.size), 0, Math.PI * 2);
           ctx.fill();
-          ctx.restore();
+          if (!isMobile) {
+            ctx.shadowBlur = 0;
+          }
         }
+        ctx.globalAlpha = 1;
       }
 
       // -------------------------------------------------------------
@@ -244,10 +257,9 @@ export default function WishToStars({ name = "Anisha", onComplete }) {
 
         // Trail history
         star.trail.unshift({ x: star.x, y: star.y, size: star.size, alpha: 1 });
-        if (star.trail.length > 32) star.trail.pop();
+        if (star.trail.length > 24) star.trail.pop();
 
         // Draw luminous purple comet trail
-        ctx.save();
         for (let i = 0; i < star.trail.length - 1; i++) {
           const t1 = star.trail[i];
           const t2 = star.trail[i + 1];
@@ -257,12 +269,17 @@ export default function WishToStars({ name = "Anisha", onComplete }) {
           ctx.strokeStyle = i % 2 === 0 ? '#C084FC' : '#E9D5FF';
           ctx.lineWidth = trailWidth;
           ctx.globalAlpha = trailAlpha;
-          ctx.shadowBlur = 14;
-          ctx.shadowColor = '#A855F7';
+          if (!isMobile) {
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#A855F7';
+          }
           ctx.beginPath();
           ctx.moveTo(t1.x, t1.y);
           ctx.lineTo(t2.x, t2.y);
           ctx.stroke();
+          if (!isMobile) {
+            ctx.shadowBlur = 0;
+          }
         }
 
         // Draw brilliant star head
@@ -359,8 +376,25 @@ export default function WishToStars({ name = "Anisha", onComplete }) {
 
     animationFrameId = requestAnimationFrame(render);
 
+    const handleVisibility = () => {
+      if (document.hidden) {
+        isRunning = false;
+        cancelAnimationFrame(animationFrameId);
+      } else {
+        if (!isRunning) {
+          isRunning = true;
+          lastTime = performance.now();
+          animationFrameId = requestAnimationFrame(render);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+
     return () => {
+      isRunning = false;
       window.removeEventListener('resize', handleResize);
+      document.removeEventListener('visibilitychange', handleVisibility);
       cancelAnimationFrame(animationFrameId);
     };
   }, []);
@@ -438,9 +472,9 @@ export default function WishToStars({ name = "Anisha", onComplete }) {
       // 1. Bright purple flash
       simRef.current.flashOpacity = 0.85;
 
-      // 2. Hundreds of outward bursting spark particles
+      // 2. Outward bursting spark particles (scaled appropriately for mobile)
       const burst = [];
-      const count = 180;
+      const count = window.innerWidth < 768 ? 65 : 160;
       for (let i = 0; i < count; i++) {
         const angle = Math.random() * Math.PI * 2;
         const speed = Math.random() * 8.5 + 2.5;
@@ -532,7 +566,7 @@ export default function WishToStars({ name = "Anisha", onComplete }) {
 
   return (
     <div
-      className="relative min-h-screen w-full flex flex-col items-center justify-center overflow-hidden select-none bg-[#020106] text-white"
+      className="relative min-h-screen min-h-[100dvh] w-full flex flex-col items-center justify-center overflow-hidden select-none bg-[#020106] text-white"
       style={{ touchAction: 'none' }} // Prevent scrolling while holding on mobile
     >
       {/* ========================================================= */}
