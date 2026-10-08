@@ -265,9 +265,7 @@ export default function BirthdayCake({ data, onComplete }) {
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-          className="relative flex items-center justify-center cursor-pointer select-none"
-          onClick={!candlesBlown ? handleBlowSuccess : undefined}
-          title={!candlesBlown ? "Click or blow to extinguish candles" : ""}
+          className="relative flex items-center justify-center select-none"
         >
           {/* Fixed Cake Container (Completely still, not shaking or bobbing) */}
           <div className="relative flex flex-col items-center mt-20">

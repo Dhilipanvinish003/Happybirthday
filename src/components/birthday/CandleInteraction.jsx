@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, MicOff, Wind } from 'lucide-react';
+import { Mic, Wind } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useBlowDetection } from '../../hooks/useBlowDetection';
 
@@ -10,8 +10,6 @@ export default function CandleInteraction({
   isBlowingSequence,
   setIsBlowingSequence
 }) {
-
-
   const triggerBlowOut = () => {
     if (candlesBlown || isBlowingSequence) return;
 
@@ -59,8 +57,20 @@ export default function CandleInteraction({
   } = useBlowDetection({
     onBlow: triggerBlowOut,
     enabled: !candlesBlown,
-    threshold: 45
+    threshold: 34
   });
+
+  // Attempt auto-activation when arriving on the cake screen
+  useEffect(() => {
+    if (!candlesBlown && !isListening && micPermission !== 'denied' && micPermission !== 'unsupported') {
+      startListening().catch(() => {});
+    }
+    return () => {
+      if (candlesBlown) {
+        stopListening();
+      }
+    };
+  }, [candlesBlown, isListening, micPermission, startListening, stopListening]);
 
   return (
     <div className="w-full flex flex-col items-center mt-6 z-20">
@@ -71,64 +81,67 @@ export default function CandleInteraction({
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="flex flex-col items-center gap-4 text-center px-4"
+            className="flex flex-col items-center gap-3 text-center px-4"
           >
-            {/* Action buttons */}
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              {/* Primary Blow button */}
-              <motion.button
-                type="button"
-                onClick={triggerBlowOut}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.96 }}
-                className="group relative px-6 sm:px-8 py-3.5 rounded-full bg-gradient-to-r from-purple-900/90 via-purple-700/80 to-purple-950/90 border border-purple-400/60 shadow-[0_0_30px_rgba(168,85,247,0.45)] hover:shadow-[0_0_45px_rgba(192,132,252,0.7)] text-white font-medium text-sm sm:text-base tracking-widest uppercase transition-all duration-300 cursor-pointer overflow-hidden backdrop-blur-md"
-              >
-                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <span className="relative flex items-center gap-2.5">
-                  <Wind className="w-4 h-4 text-purple-200 group-hover:translate-x-0.5 transition-transform" />
-                  <span>BLOW THE CANDLES</span>
-                </span>
-              </motion.button>
+            {isListening ? (
+              /* Microphone actively listening for blow sound */
+              <div className="flex flex-col items-center gap-3">
+                <div className="flex items-center gap-3 px-6 py-3.5 rounded-full bg-purple-950/80 border border-purple-400/60 shadow-[0_0_30px_rgba(168,85,247,0.45)] backdrop-blur-md">
+                  <div className="relative flex items-center justify-center">
+                    <span className="absolute w-8 h-8 rounded-full bg-purple-500/30 animate-ping" />
+                    <Mic className="w-5 h-5 text-purple-300" />
+                  </div>
+                  <span className="text-xs sm:text-sm font-medium tracking-[0.2em] uppercase text-purple-200 animate-pulse">
+                    BLOW INTO YOUR MIC NOW 🌬️
+                  </span>
+                  {/* Dynamic sound visualizer */}
+                  <div className="flex items-end gap-1 h-5 w-12 justify-center">
+                    {[20, 50, 80, 45, 65].map((base, i) => (
+                      <span
+                        key={i}
+                        className="w-1.5 rounded-full bg-gradient-to-t from-purple-500 to-pink-300 transition-all duration-100"
+                        style={{
+                          height: `${Math.max(15, Math.min(100, (micLevel * 1.5) + (base * 0.2)))}%`
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
 
-              {/* Microphone trigger button */}
-              {micPermission !== 'unsupported' && (
-                <button
+                {/* Real-time breath level indicator */}
+                <div className="w-48 sm:w-60 h-1.5 rounded-full bg-white/10 overflow-hidden border border-purple-500/30">
+                  <div
+                    className="h-full bg-gradient-to-r from-purple-500 via-pink-400 to-amber-300 transition-all duration-100 ease-out"
+                    style={{ width: `${Math.min(100, micLevel * 2.2)}%` }}
+                  />
+                </div>
+
+                <p className="text-xs text-purple-300/80 font-light tracking-wider uppercase">
+                  Blow directly on your microphone to extinguish the candles
+                </p>
+              </div>
+            ) : (
+              /* Prompt user to grant/activate microphone if required by browser */
+              <div className="flex flex-col items-center gap-3">
+                <motion.button
                   type="button"
-                  onClick={() => {
-                    if (isListening) {
-                      stopListening();
-                    } else {
-                      startListening();
-                    }
-                  }}
-                  className={`flex items-center gap-2 px-4 py-3.5 rounded-full text-xs sm:text-sm tracking-wider uppercase border transition-all duration-300 cursor-pointer backdrop-blur-md ${
-                    isListening
-                      ? 'bg-purple-900/50 border-purple-400 text-purple-200 shadow-[0_0_20px_rgba(192,132,252,0.5)]'
-                      : 'bg-black/40 border-purple-500/30 text-purple-300/80 hover:text-purple-100 hover:border-purple-400/50'
-                  }`}
-                  title={isListening ? "Listening for your breath blow..." : "Enable microphone to blow with real breath"}
+                  onClick={startListening}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.96 }}
+                  className="group relative px-7 sm:px-9 py-4 rounded-full bg-gradient-to-r from-purple-900/90 via-purple-700/80 to-purple-950/90 border border-purple-400/60 shadow-[0_0_35px_rgba(168,85,247,0.5)] hover:shadow-[0_0_50px_rgba(192,132,252,0.8)] text-white font-medium text-sm sm:text-base tracking-widest uppercase transition-all duration-300 cursor-pointer overflow-hidden backdrop-blur-md flex items-center gap-3"
                 >
-                  {isListening ? (
-                    <>
-                      <Mic className="w-4 h-4 text-purple-300 animate-pulse" />
-                      <span>Mic Active ({micLevel}%)</span>
-                    </>
-                  ) : (
-                    <>
-                      <MicOff className="w-4 h-4 text-purple-400/70" />
-                      <span>Use Mic</span>
-                    </>
-                  )}
-                </button>
-              )}
-            </div>
-
-            {/* Helper guidance */}
-            <p className="text-xs sm:text-sm text-purple-300/70 font-light tracking-wide max-w-sm">
-              {isListening
-                ? "Blow gently into your device microphone to extinguish the flames"
-                : "Tap the button or enable microphone to blow out the candles"}
-            </p>
+                  <Mic className="w-5 h-5 text-purple-200 animate-pulse" />
+                  <span className="shimmer-text">
+                    {micPermission === 'denied' ? 'ALLOW MIC TO BLOW CANDLES' : 'ENABLE MIC & BLOW CANDLES 🎙️'}
+                  </span>
+                </motion.button>
+                <p className="text-xs sm:text-sm text-purple-300/80 font-light tracking-wide max-w-sm">
+                  {micPermission === 'denied'
+                    ? 'Microphone permission needed. Please allow microphone in your browser to blow out the candles.'
+                    : 'Tap to enable microphone, then blow directly into your device to extinguish the flames.'}
+                </p>
+              </div>
+            )}
           </motion.div>
         ) : isBlowingSequence && !candlesBlown ? (
           <motion.div

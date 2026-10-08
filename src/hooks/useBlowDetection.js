@@ -54,11 +54,14 @@ export function useBlowDetection({ onBlow, enabled = true, threshold = 48 }) {
 
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       const ctx = new AudioCtx();
+      if (ctx.state === 'suspended') {
+        await ctx.resume().catch(() => {});
+      }
       audioContextRef.current = ctx;
 
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 512;
-      analyser.smoothingTimeConstant = 0.3;
+      analyser.smoothingTimeConstant = 0.2;
       analyserRef.current = analyser;
 
       const microphone = ctx.createMediaStreamSource(stream);
@@ -74,19 +77,31 @@ export function useBlowDetection({ onBlow, enabled = true, threshold = 48 }) {
 
         analyserRef.current.getByteFrequencyData(dataArray);
 
-        // Calculate average volume
+        // Breath / blowing sound energy across low & mid bins
         let sum = 0;
-        // Focus on mid-to-high frequencies typical of blowing (wind noise across diaphragm)
-        for (let i = 8; i < bufferLength; i++) {
+        let count = 0;
+        for (let i = 1; i < Math.min(bufferLength, 80); i++) {
           sum += dataArray[i];
+          count++;
         }
-        const average = sum / (bufferLength - 8);
-        setMicLevel(Math.min(100, Math.round((average / 128) * 100)));
+        const average = count > 0 ? sum / count : 0;
 
-        // Blowing detection: continuous elevated noise across consecutive frames
-        if (average > threshold) {
+        // Turbulence directly on mic capsule (wind puff in bins 1-12)
+        let lowSum = 0;
+        for (let i = 1; i <= 12; i++) {
+          lowSum += dataArray[i];
+        }
+        const lowAverage = lowSum / 12;
+
+        const currentLevel = Math.min(100, Math.round((average / 128) * 100));
+        setMicLevel(currentLevel);
+
+        // Blowing detection: continuous elevated noise or direct air turbulence on microphone
+        const isBlowing = average > threshold || lowAverage > (threshold + 8);
+
+        if (isBlowing) {
           blowCountRef.current += 1;
-          if (blowCountRef.current >= 4 && !hasTriggeredRef.current) {
+          if (blowCountRef.current >= 3 && !hasTriggeredRef.current) {
             hasTriggeredRef.current = true;
             if (onBlow) {
               onBlow();
